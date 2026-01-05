@@ -1,12 +1,12 @@
 /**
- * Service Worker module for webmunk-block-allow
+ * Service Worker module for webmunk-lists-front-end
  *
  * Handles automatic configuration sync from backend
  */
 
 import { syncListsFromConfig } from '@bric/webmunk-core/list-utilities'
 
-console.log('[webmunk-block-allow] Service worker module loaded')
+console.log('[webmunk-lists-front-end] Service worker module loaded')
 
 /**
  * Configuration for list sync
@@ -25,7 +25,7 @@ let syncConfig: SyncConfig = {
  * Sets up automatic configuration sync
  */
 export async function setup(config?: SyncConfig): Promise<void> {
-  console.log('[webmunk-block-allow] Setting up service worker module')
+  console.log('[webmunk-lists-front-end] Setting up service worker module')
 
   // Merge provided config with defaults
   if (config) {
@@ -34,13 +34,13 @@ export async function setup(config?: SyncConfig): Promise<void> {
 
   // Perform initial sync if config URL is provided
   if (syncConfig.configUrl) {
-    console.log('[webmunk-block-allow] Performing initial configuration sync')
+    console.log('[webmunk-lists-front-end] Performing initial configuration sync')
     await performSync()
   }
 
   // Set up periodic sync alarm
   if (syncConfig.syncIntervalMinutes && syncConfig.syncIntervalMinutes > 0) {
-    console.log(`[webmunk-block-allow] Setting up periodic sync every ${syncConfig.syncIntervalMinutes} minutes`)
+    console.log(`[webmunk-lists-front-end] Setting up periodic sync every ${syncConfig.syncIntervalMinutes} minutes`)
 
     chrome.alarms.create('webmunk-list-sync', {
       periodInMinutes: syncConfig.syncIntervalMinutes
@@ -49,7 +49,7 @@ export async function setup(config?: SyncConfig): Promise<void> {
     // Listen for alarm
     chrome.alarms.onAlarm.addListener(async (alarm) => {
       if (alarm.name === 'webmunk-list-sync') {
-        console.log('[webmunk-block-allow] Periodic sync triggered')
+        console.log('[webmunk-lists-front-end] Periodic sync triggered')
         await performSync()
       }
     })
@@ -61,7 +61,7 @@ export async function setup(config?: SyncConfig): Promise<void> {
  */
 async function performSync(): Promise<void> {
   if (!syncConfig.configUrl) {
-    console.warn('[webmunk-block-allow] No config URL provided, skipping sync')
+    console.warn('[webmunk-lists-front-end] No config URL provided, skipping sync')
     return
   }
 
@@ -69,18 +69,18 @@ async function performSync(): Promise<void> {
     const result = await syncListsFromConfig(syncConfig.configUrl)
 
     if (result.success) {
-      console.log('[webmunk-block-allow] Sync completed successfully')
-      console.log('[webmunk-block-allow] Lists updated:', result.listsUpdated)
+      console.log('[webmunk-lists-front-end] Sync completed successfully')
+      console.log('[webmunk-lists-front-end] Lists updated:', result.listsUpdated)
 
       // Store last sync timestamp
       await chrome.storage.local.set({
         'webmunk_last_list_sync': Date.now()
       })
     } else {
-      console.error('[webmunk-block-allow] Sync failed:', result.errors)
+      console.error('[webmunk-lists-front-end] Sync failed:', result.errors)
     }
   } catch (error) {
-    console.error('[webmunk-block-allow] Sync error:', error)
+    console.error('[webmunk-lists-front-end] Sync error:', error)
   }
 }
 
@@ -89,13 +89,13 @@ async function performSync(): Promise<void> {
  * Can be called from extension UI
  */
 export async function triggerManualSync(): Promise<boolean> {
-  console.log('[webmunk-block-allow] Manual sync triggered')
+  console.log('[webmunk-lists-front-end] Manual sync triggered')
 
   try {
     await performSync()
     return true
   } catch (error) {
-    console.error('[webmunk-block-allow] Manual sync failed:', error)
+    console.error('[webmunk-lists-front-end] Manual sync failed:', error)
     return false
   }
 }

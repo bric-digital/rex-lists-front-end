@@ -1,23 +1,24 @@
 {
-  "name": "@bric/webmunk-block-allow",
+  "name": "@bric/webmunk-lists-front-end",
   "version": "0.0.1",
-  "description": "Webmunk module for viewing and managing domain lists (blocking, allowing, categorization).",
+  "description": "Webmunk module providing an extension UI + service worker helper for viewing and managing IndexedDB-backed lists.",
   "keywords": [
     "extension",
     "webmunk",
-    "block",
-    "allow",
-    "filter"
+    "lists",
+    "domain",
+    "filter",
+    "categorization"
   ],
   "author": "Behavioral Research Innovation Center",
   "type": "module",
-  "homepage": "https://github.com/bric-digital/webmunk-block-allow",
+  "homepage": "https://github.com/bric-digital/webmunk-lists-front-end",
   "bugs": {
-    "url": "https://github.com/bric-digital/webmunk-block-allow/issues"
+    "url": "https://github.com/bric-digital/webmunk-lists-front-end/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bric-digital/webmunk-block-allow.git"
+    "url": "git+https://github.com/bric-digital/webmunk-lists-front-end.git"
   },
   "exports": {
     "./extension": "./src/extension.mts",
@@ -39,6 +40,7 @@
     "typescript-eslint": "^8.46.3"
   },
   "dependencies": {
+    "@bric/webmunk-core": "file:../webmunk-core",
     "jquery": "^3.7.1"
   }
 }

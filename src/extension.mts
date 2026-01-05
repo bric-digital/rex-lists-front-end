@@ -1,5 +1,5 @@
 /**
- * Extension UI module for webmunk-block-allow
+ * Extension UI module for webmunk-lists-front-end
  *
  * Provides UI for viewing and managing domain lists
  */
@@ -17,30 +17,48 @@ import {
   type PatternType,
   type EntrySource
 } from '@bric/webmunk-core/list-utilities'
+import { WebmunkExtensionModule, type WebmunkUIDefinition } from '@bric/webmunk-core/extension'
 import { triggerManualSync, getLastSyncTime } from './service-worker.mjs'
 
-console.log('[webmunk-block-allow] Extension module loaded')
+console.log('[webmunk-lists-front-end] Extension module loaded')
 
 /**
- * WebmunkExtensionModule interface for compatibility
+ * WebmunkExtensionModule for list editor UI
  */
-export class BlockAllowExtensionModule {
+export class ListsFrontEndExtensionModule extends WebmunkExtensionModule {
   private currentList: string | null = null
   private currentEntries: ListEntry[] = []
 
   /**
    * Setup the extension module
    */
-  async setup(): Promise<void> {
-    console.log('[webmunk-block-allow] Setting up extension module')
+  setup(): void {
+    console.log('[webmunk-lists-front-end] Setting up extension module')
   }
 
   /**
    * Activate the list editor interface
    */
-  async activateInterface(uiDefinition: any): Promise<void> { // eslint-disable-line @typescript-eslint/no-explicit-any
-    console.log('[webmunk-block-allow] Activating interface:', uiDefinition)
+  activateInterface(uiDefinition: WebmunkUIDefinition): boolean {
+    console.log('[webmunk-lists-front-end] Activating interface:', uiDefinition)
 
+    // Only activate for list-editor identifier
+    if (uiDefinition.identifier !== 'list-editor') {
+      return false
+    }
+
+    // Initialize asynchronously (fire and forget)
+    this.initializeAsync().catch((error) => {
+      console.error('[webmunk-lists-front-end] Failed to initialize:', error)
+    })
+
+    return true
+  }
+
+  /**
+   * Async initialization
+   */
+  private async initializeAsync(): Promise<void> {
     // Wait for DOM to be ready
     await this.waitForElement('#list-container')
 
@@ -90,7 +108,7 @@ export class BlockAllowExtensionModule {
     const container = $('#list-container')
 
     if (container.length === 0) {
-      console.warn('[webmunk-block-allow] #list-container not found')
+      console.warn('[webmunk-lists-front-end] #list-container not found')
       return
     }
 
@@ -151,6 +169,7 @@ export class BlockAllowExtensionModule {
                     <option value="domain">Domain (matches registered domain)</option>
                     <option value="subdomain_wildcard">Subdomain Wildcard (*.example.com)</option>
                     <option value="exact_url">Exact URL</option>
+                    <option value="host_path_prefix">Host + Path Prefix (example.com/path...)</option>
                     <option value="regex">Regular Expression</option>
                   </select>
                 </div>
@@ -191,9 +210,9 @@ export class BlockAllowExtensionModule {
         selector.append(`<option value="${listName}">${listName}</option>`)
       })
 
-      console.log(`[webmunk-block-allow] Loaded ${lists.length} lists`)
+      console.log(`[webmunk-lists-front-end] Loaded ${lists.length} lists`)
     } catch (error) {
-      console.error('[webmunk-block-allow] Failed to load lists:', error)
+      console.error('[webmunk-lists-front-end] Failed to load lists:', error)
     }
   }
 
@@ -266,9 +285,9 @@ export class BlockAllowExtensionModule {
         this.deleteEntry(id)
       })
 
-      console.log(`[webmunk-block-allow] Loaded ${this.currentEntries.length} entries for list: ${listName}`)
+      console.log(`[webmunk-lists-front-end] Loaded ${this.currentEntries.length} entries for list: ${listName}`)
     } catch (error) {
-      console.error('[webmunk-block-allow] Failed to load list entries:', error)
+      console.error('[webmunk-lists-front-end] Failed to load list entries:', error)
     }
   }
 
@@ -311,7 +330,7 @@ export class BlockAllowExtensionModule {
         $('#last-sync-time').text('Last sync: Never')
       }
     } catch (error) {
-      console.error('[webmunk-block-allow] Failed to get sync status:', error)
+      console.error('[webmunk-lists-front-end] Failed to get sync status:', error)
     }
   }
 
@@ -319,6 +338,35 @@ export class BlockAllowExtensionModule {
    * Setup event listeners
    */
   private setupEventListeners(): void {
+    // Accessibility: ensure focus isn't left inside the modal when it hides (Bootstrap sets aria-hidden).
+    // We do this both on the Bootstrap lifecycle events and *before* the dismiss click handler runs.
+    const modalEl = document.getElementById('entry-modal')
+    const restoreFocusOutsideModal = () => {
+      if (!modalEl) return
+
+      const active = document.activeElement
+      if (active instanceof HTMLElement && modalEl.contains(active)) {
+        active.blur()
+      }
+
+      const addBtn = document.getElementById('add-entry-btn')
+      if (addBtn instanceof HTMLElement) {
+        addBtn.focus()
+      }
+    }
+
+    if (modalEl) {
+      // Before hide starts
+      modalEl.addEventListener('hide.bs.modal', restoreFocusOutsideModal)
+      // After hide completes (belt-and-suspenders)
+      modalEl.addEventListener('hidden.bs.modal', restoreFocusOutsideModal)
+
+      // Run *before* Bootstrap's dismiss click handler (capture phase).
+      modalEl.querySelectorAll<HTMLElement>('[data-bs-dismiss="modal"]').forEach((el) => {
+        el.addEventListener('click', restoreFocusOutsideModal, { capture: true })
+      })
+    }
+
     // List selector change
     $('#list-selector').on('change', async (e) => {
       const listName = $(e.currentTarget).val() as string
@@ -402,7 +450,7 @@ export class BlockAllowExtensionModule {
     const entry = this.currentEntries.find(e => e.id === entryId)
 
     if (!entry) {
-      console.error('[webmunk-block-allow] Entry not found:', entryId)
+      console.error('[webmunk-lists-front-end] Entry not found:', entryId)
       return
     }
 
@@ -465,7 +513,7 @@ export class BlockAllowExtensionModule {
       const modal = (window as any).bootstrap.Modal.getInstance(document.getElementById('entry-modal')!) // eslint-disable-line @typescript-eslint/no-explicit-any
       modal?.hide()
     } catch (error) {
-      console.error('[webmunk-block-allow] Failed to save entry:', error)
+      console.error('[webmunk-lists-front-end] Failed to save entry:', error)
       alert('Failed to save entry. See console for details.')
     }
   }
@@ -485,7 +533,7 @@ export class BlockAllowExtensionModule {
         await this.loadListEntries(this.currentList)
       }
     } catch (error) {
-      console.error('[webmunk-block-allow] Failed to delete entry:', error)
+      console.error('[webmunk-lists-front-end] Failed to delete entry:', error)
       alert('Failed to delete entry. See console for details.')
     }
   }
@@ -510,7 +558,7 @@ export class BlockAllowExtensionModule {
       a.click()
       URL.revokeObjectURL(url)
     } catch (error) {
-      console.error('[webmunk-block-allow] Failed to export list:', error)
+      console.error('[webmunk-lists-front-end] Failed to export list:', error)
       alert('Failed to export list. See console for details.')
     }
   }
@@ -532,11 +580,11 @@ export class BlockAllowExtensionModule {
       // Reload list
       await this.loadListEntries(this.currentList)
     } catch (error) {
-      console.error('[webmunk-block-allow] Failed to import list:', error)
+      console.error('[webmunk-lists-front-end] Failed to import list:', error)
       alert('Failed to import list. See console for details.')
     }
   }
 }
 
 // Export module for use in extension
-export default new BlockAllowExtensionModule()
+export default new ListsFrontEndExtensionModule()
