@@ -31,8 +31,8 @@ In practice, these lists are most often used as **domain/pattern sets** for:
   - `list_name`: string
   - `domain`: string (pattern text)
   - `pattern_type`: one of:
-    - `domain` (registered domain match, PSL-aware)
-    - `subdomain_wildcard` (e.g. `*.example.com`)
+    - `domain` (registered domain ONLY, PSL-aware; must be eTLD+1 like `google.com` — subdomains like `health.google.com` are invalid)
+    - `host` (exact hostname match; ignores leading `www.`)
     - `exact_url`
     - `host_path_prefix` (e.g. `example.com/path...`)
     - `regex`

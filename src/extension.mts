@@ -166,8 +166,8 @@ export class ListsFrontEndExtensionModule extends WebmunkExtensionModule {
                 <div class="mb-3">
                   <label for="entry-pattern-type" class="form-label">Pattern Type</label>
                   <select class="form-select" id="entry-pattern-type" required>
-                    <option value="domain">Domain (matches registered domain)</option>
-                    <option value="subdomain_wildcard">Subdomain Wildcard (*.example.com)</option>
+                    <option value="domain">Registered Domain ONLY (must be eTLD+1 like google.com)</option>
+                    <option value="host">Hostname (exact host; ignores leading www.)</option>
                     <option value="exact_url">Exact URL</option>
                     <option value="host_path_prefix">Host + Path Prefix (example.com/path...)</option>
                     <option value="regex">Regular Expression</option>
