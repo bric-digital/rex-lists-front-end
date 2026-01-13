@@ -16,7 +16,7 @@ import {
   type ListEntry,
   type PatternType,
   type EntrySource
-} from '@bric/webmunk-core/list-utilities'
+} from '@bric/webmunk-lists'
 import { WebmunkExtensionModule, type WebmunkUIDefinition } from '@bric/webmunk-core/extension'
 import { triggerManualSync, getLastSyncTime } from './service-worker.mjs'
 
