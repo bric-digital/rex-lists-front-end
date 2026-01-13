@@ -4,7 +4,7 @@
  * Handles automatic configuration sync from backend
  */
 
-import { syncListsFromConfig } from '@bric/webmunk-core/list-utilities'
+import { syncListsFromConfig } from '@bric/webmunk-lists'
 
 console.log('[webmunk-lists-front-end] Service worker module loaded')
 
