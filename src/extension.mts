@@ -18,7 +18,7 @@ import {
   type EntrySource
 } from '@bric/webmunk-lists'
 import { WebmunkExtensionModule, type WebmunkUIDefinition } from '@bric/webmunk-core/extension'
-import { triggerManualSync, getLastSyncTime } from './service-worker.mjs'
+import { triggerManualSync, getLastSyncTime } from './service-worker.mts'
 
 console.log('[webmunk-lists-front-end] Extension module loaded')
 
