@@ -17,15 +17,15 @@ import {
   type PatternType,
   type EntrySource
 } from '@bric/webmunk-lists'
-import { REXExtensionModule, type REXUIDefinition } from '@bric/webmunk-core/extension'
+import { WebmunkExtensionModule, type WebmunkUIDefinition } from '@bric/webmunk-core/extension'
 import { triggerManualSync, getLastSyncTime } from './service-worker.mts'
 
 console.log('[webmunk-lists-front-end] Extension module loaded')
 
 /**
- * REXExtensionModule for list editor UI
+ * WebmunkExtensionModule for list editor UI
  */
-export class ListsFrontEndExtensionModule extends REXExtensionModule {
+export class ListsFrontEndExtensionModule extends WebmunkExtensionModule {
   private currentList: string | null = null
   private currentEntries: ListEntry[] = []
 
@@ -39,7 +39,7 @@ export class ListsFrontEndExtensionModule extends REXExtensionModule {
   /**
    * Activate the list editor interface
    */
-  activateInterface(uiDefinition: REXUIDefinition): boolean {
+  activateInterface(uiDefinition: WebmunkUIDefinition): boolean {
     console.log('[webmunk-lists-front-end] Activating interface:', uiDefinition)
 
     // Only activate for list-editor identifier
