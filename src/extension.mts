@@ -17,7 +17,7 @@ import {
   type PatternType,
   type EntrySource
 } from '@bric/webmunk-lists'
-import { REXExtensionModule, type REXUIDefinition } from '@bric/webmunk-core/extension'
+import { REXExtensionModule, type REXUIDefinition } from '@bric/rex-core/extension'
 import { triggerManualSync, getLastSyncTime } from './service-worker.mts'
 
 console.log('[webmunk-lists-front-end] Extension module loaded')

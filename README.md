@@ -11,18 +11,38 @@ This module reads from the `lists_front_end` section of the backend config.
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
 | `enabled` | boolean | Yes | - | Enable/disable the list management UI |
+| `config_url` | string | No | derived from core config | URL to fetch list configuration JSON from |
+| `sync_interval_minutes` | number | No | 60 | Periodic sync interval for list refresh |
 
 ### Example
 
 ```json
 {
   "lists_front_end": {
-    "enabled": true
+    "enabled": true,
+    "sync_interval_minutes": 60
   }
 }
 ```
 
 > **Note**: The actual list data is configured in the `lists` section (see [webmunk-lists](https://github.com/bric-digital/webmunk-lists)). This module only controls whether the list management UI is available.
+
+### Local Override (Lists Front End Only)
+
+This module supports a local override in `chrome.storage.local` at key `webmunkListsFrontEndConfiguration`.
+
+- If the stored object has a `lists_front_end` object, that object is used.
+- If the stored object is already a flat `lists_front_end` config shape, it is also accepted.
+- Override values are merged over rex-core configuration and can override fields like:
+  - `config_url`
+  - `sync_interval_minutes`
+- This override is scoped to the lists front end module; it does not replace module config loading rules in other modules.
+
+### Interaction with History Module
+
+- `webmunk-history` reads list names from `REXConfiguration.history` (for example `allow_lists` and `filter_lists`).
+- When a user edits list entries in this UI, those entries are written to the shared lists database.
+- History matching uses that same shared list data, so entry changes made here are reflected in history collection behavior for configured lists.
 
 ---
 
