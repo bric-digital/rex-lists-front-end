@@ -1,13 +1,13 @@
 /**
- * Service Worker module for webmunk-lists-front-end
+ * Service Worker module for rex-lists-front-end
  *
  * Handles automatic configuration sync from backend
  */
 
-import { syncListsFromConfig } from '@bric/webmunk-lists'
+import { syncListsFromConfig, setDebug } from '@bric/webmunk-lists'
 import rexCorePlugin, { type REXConfiguration } from '@bric/rex-core/service-worker'
 
-console.log('[webmunk-lists-front-end] Service worker module loaded')
+console.log('[rex-lists-front-end] Service worker module loaded')
 
 /**
  * Configuration for list sync
@@ -86,7 +86,7 @@ async function loadEffectiveSyncConfig(setupConfig?: SyncConfig): Promise<SyncCo
   try {
     baseConfiguration = await rexCorePlugin.fetchConfiguration()
   } catch (error) {
-    console.warn('[webmunk-lists-front-end] Could not fetch configuration from rex-core:', error)
+    console.warn('[rex-lists-front-end] Could not fetch configuration from rex-core:', error)
   }
 
   const base = asRecord(baseConfiguration as unknown)
@@ -100,6 +100,10 @@ async function loadEffectiveSyncConfig(setupConfig?: SyncConfig): Promise<SyncCo
     overrideConfig?.sync_interval_minutes ??
     serverConfig?.sync_interval_minutes ??
     DEFAULT_SYNC_INTERVAL_MINUTES
+
+  // Apply debug setting from lists_config section
+  const listsModuleConfig = asRecord(base?.lists_config)
+  setDebug(listsModuleConfig?.debug === true)
 
   const configUrl = await resolveConfigUrl(baseConfiguration, serverConfig, overrideConfig, setupConfig)
 
@@ -118,7 +122,7 @@ async function configureSyncAlarm(): Promise<void> {
   await chrome.alarms.clear('webmunk-list-sync')
 
   if (syncConfig.syncIntervalMinutes && syncConfig.syncIntervalMinutes > 0) {
-    console.log(`[webmunk-lists-front-end] Setting up periodic sync every ${syncConfig.syncIntervalMinutes} minutes`)
+    console.log(`[rex-lists-front-end] Setting up periodic sync every ${syncConfig.syncIntervalMinutes} minutes`)
     await chrome.alarms.create('webmunk-list-sync', {
       periodInMinutes: syncConfig.syncIntervalMinutes
     })
@@ -147,13 +151,13 @@ function registerStorageListener(): void {
         }
       })
       .catch((error) => {
-        console.error('[webmunk-lists-front-end] Failed to reload sync configuration:', error)
+        console.error('[rex-lists-front-end] Failed to reload sync configuration:', error)
       })
   })
 
   chrome.alarms.onAlarm.addListener(async (alarm) => {
     if (alarm.name === 'webmunk-list-sync') {
-      console.log('[webmunk-lists-front-end] Periodic sync triggered')
+      console.log('[rex-lists-front-end] Periodic sync triggered')
       await performSync()
     }
   })
@@ -166,13 +170,13 @@ function registerStorageListener(): void {
  * Sets up automatic configuration sync
  */
 export async function setup(config?: SyncConfig): Promise<void> {
-  console.log('[webmunk-lists-front-end] Setting up service worker module')
+  console.log('[rex-lists-front-end] Setting up service worker module')
 
   syncConfig = await loadEffectiveSyncConfig(config)
   registerStorageListener()
 
   if (syncConfig.configUrl) {
-    console.log('[webmunk-lists-front-end] Performing initial configuration sync')
+    console.log('[rex-lists-front-end] Performing initial configuration sync')
     await performSync()
   }
 
@@ -184,12 +188,12 @@ export async function setup(config?: SyncConfig): Promise<void> {
  */
 async function performSync(): Promise<void> {
   if (isSyncInProgress) {
-    console.log('[webmunk-lists-front-end] Sync already in progress, skipping')
+    console.log('[rex-lists-front-end] Sync already in progress, skipping')
     return
   }
 
   if (!syncConfig.configUrl) {
-    console.warn('[webmunk-lists-front-end] No config URL provided, skipping sync')
+    console.warn('[rex-lists-front-end] No config URL provided, skipping sync')
     return
   }
 
@@ -198,18 +202,18 @@ async function performSync(): Promise<void> {
     const result = await syncListsFromConfig(syncConfig.configUrl)
 
     if (result.success) {
-      console.log('[webmunk-lists-front-end] Sync completed successfully')
-      console.log('[webmunk-lists-front-end] Lists updated:', result.listsUpdated)
+      console.log('[rex-lists-front-end] Sync completed successfully')
+      console.log('[rex-lists-front-end] Lists updated:', result.listsUpdated)
 
       // Store last sync timestamp
       await chrome.storage.local.set({
         'webmunk_last_list_sync': Date.now()
       })
     } else {
-      console.error('[webmunk-lists-front-end] Sync failed:', result.errors)
+      console.error('[rex-lists-front-end] Sync failed:', result.errors)
     }
   } catch (error) {
-    console.error('[webmunk-lists-front-end] Sync error:', error)
+    console.error('[rex-lists-front-end] Sync error:', error)
   } finally {
     isSyncInProgress = false
   }
@@ -220,13 +224,13 @@ async function performSync(): Promise<void> {
  * Can be called from extension UI
  */
 export async function triggerManualSync(): Promise<boolean> {
-  console.log('[webmunk-lists-front-end] Manual sync triggered')
+  console.log('[rex-lists-front-end] Manual sync triggered')
 
   try {
     await performSync()
     return true
   } catch (error) {
-    console.error('[webmunk-lists-front-end] Manual sync failed:', error)
+    console.error('[rex-lists-front-end] Manual sync failed:', error)
     return false
   }
 }

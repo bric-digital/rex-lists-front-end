@@ -1,5 +1,5 @@
 /**
- * Extension UI module for webmunk-lists-front-end
+ * Extension UI module for rex-lists-front-end
  *
  * Provides UI for viewing and managing domain lists
  */
@@ -20,7 +20,7 @@ import {
 import { REXExtensionModule, type REXUIDefinition } from '@bric/rex-core/extension'
 import { triggerManualSync, getLastSyncTime } from './service-worker.mts'
 
-console.log('[webmunk-lists-front-end] Extension module loaded')
+console.log('[rex-lists-front-end] Extension module loaded')
 
 /**
  * REXExtensionModule for list editor UI
@@ -33,14 +33,14 @@ export class ListsFrontEndExtensionModule extends REXExtensionModule {
    * Setup the extension module
    */
   setup(): void {
-    console.log('[webmunk-lists-front-end] Setting up extension module')
+    console.log('[rex-lists-front-end] Setting up extension module')
   }
 
   /**
    * Activate the list editor interface
    */
   activateInterface(uiDefinition: REXUIDefinition): boolean {
-    console.log('[webmunk-lists-front-end] Activating interface:', uiDefinition)
+    console.log('[rex-lists-front-end] Activating interface:', uiDefinition)
 
     // Only activate for list-editor identifier
     if (uiDefinition.identifier !== 'list-editor') {
@@ -49,7 +49,7 @@ export class ListsFrontEndExtensionModule extends REXExtensionModule {
 
     // Initialize asynchronously (fire and forget)
     this.initializeAsync().catch((error) => {
-      console.error('[webmunk-lists-front-end] Failed to initialize:', error)
+      console.error('[rex-lists-front-end] Failed to initialize:', error)
     })
 
     return true
@@ -108,7 +108,7 @@ export class ListsFrontEndExtensionModule extends REXExtensionModule {
     const container = $('#list-container')
 
     if (container.length === 0) {
-      console.warn('[webmunk-lists-front-end] #list-container not found')
+      console.warn('[rex-lists-front-end] #list-container not found')
       return
     }
 
@@ -210,9 +210,9 @@ export class ListsFrontEndExtensionModule extends REXExtensionModule {
         selector.append(`<option value="${listName}">${listName}</option>`)
       })
 
-      console.log(`[webmunk-lists-front-end] Loaded ${lists.length} lists`)
+      console.log(`[rex-lists-front-end] Loaded ${lists.length} lists`)
     } catch (error) {
-      console.error('[webmunk-lists-front-end] Failed to load lists:', error)
+      console.error('[rex-lists-front-end] Failed to load lists:', error)
     }
   }
 
@@ -285,9 +285,9 @@ export class ListsFrontEndExtensionModule extends REXExtensionModule {
         this.deleteEntry(id)
       })
 
-      console.log(`[webmunk-lists-front-end] Loaded ${this.currentEntries.length} entries for list: ${listName}`)
+      console.log(`[rex-lists-front-end] Loaded ${this.currentEntries.length} entries for list: ${listName}`)
     } catch (error) {
-      console.error('[webmunk-lists-front-end] Failed to load list entries:', error)
+      console.error('[rex-lists-front-end] Failed to load list entries:', error)
     }
   }
 
@@ -330,7 +330,7 @@ export class ListsFrontEndExtensionModule extends REXExtensionModule {
         $('#last-sync-time').text('Last sync: Never')
       }
     } catch (error) {
-      console.error('[webmunk-lists-front-end] Failed to get sync status:', error)
+      console.error('[rex-lists-front-end] Failed to get sync status:', error)
     }
   }
 
@@ -450,7 +450,7 @@ export class ListsFrontEndExtensionModule extends REXExtensionModule {
     const entry = this.currentEntries.find(e => e.id === entryId)
 
     if (!entry) {
-      console.error('[webmunk-lists-front-end] Entry not found:', entryId)
+      console.error('[rex-lists-front-end] Entry not found:', entryId)
       return
     }
 
@@ -513,7 +513,7 @@ export class ListsFrontEndExtensionModule extends REXExtensionModule {
       const modal = (window as any).bootstrap.Modal.getInstance(document.getElementById('entry-modal')!) // eslint-disable-line @typescript-eslint/no-explicit-any
       modal?.hide()
     } catch (error) {
-      console.error('[webmunk-lists-front-end] Failed to save entry:', error)
+      console.error('[rex-lists-front-end] Failed to save entry:', error)
       alert('Failed to save entry. See console for details.')
     }
   }
@@ -533,7 +533,7 @@ export class ListsFrontEndExtensionModule extends REXExtensionModule {
         await this.loadListEntries(this.currentList)
       }
     } catch (error) {
-      console.error('[webmunk-lists-front-end] Failed to delete entry:', error)
+      console.error('[rex-lists-front-end] Failed to delete entry:', error)
       alert('Failed to delete entry. See console for details.')
     }
   }
@@ -558,7 +558,7 @@ export class ListsFrontEndExtensionModule extends REXExtensionModule {
       a.click()
       URL.revokeObjectURL(url)
     } catch (error) {
-      console.error('[webmunk-lists-front-end] Failed to export list:', error)
+      console.error('[rex-lists-front-end] Failed to export list:', error)
       alert('Failed to export list. See console for details.')
     }
   }
@@ -580,7 +580,7 @@ export class ListsFrontEndExtensionModule extends REXExtensionModule {
       // Reload list
       await this.loadListEntries(this.currentList)
     } catch (error) {
-      console.error('[webmunk-lists-front-end] Failed to import list:', error)
+      console.error('[rex-lists-front-end] Failed to import list:', error)
       alert('Failed to import list. See console for details.')
     }
   }

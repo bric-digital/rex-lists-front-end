@@ -1,10 +1,10 @@
 {
-  "name": "@bric/webmunk-lists-front-end",
+  "name": "@bric/rex-lists-front-end",
   "version": "0.0.1",
-  "description": "Webmunk module providing an extension UI + service worker helper for viewing and managing IndexedDB-backed lists.",
+  "description": "REX module providing an extension UI + service worker helper for viewing and managing IndexedDB-backed lists.",
   "keywords": [
     "extension",
-    "webmunk",
+    "rex",
     "lists",
     "domain",
     "filter",
@@ -12,13 +12,13 @@
   ],
   "author": "Behavioral Research Innovation Center",
   "type": "module",
-  "homepage": "https://github.com/bric-digital/webmunk-lists-front-end",
+  "homepage": "https://github.com/bric-digital/rex-lists-front-end",
   "bugs": {
-    "url": "https://github.com/bric-digital/webmunk-lists-front-end/issues"
+    "url": "https://github.com/bric-digital/rex-lists-front-end/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bric-digital/webmunk-lists-front-end.git"
+    "url": "git+https://github.com/bric-digital/rex-lists-front-end.git"
   },
   "exports": {
     "./extension": "./src/extension.mts",
@@ -41,7 +41,7 @@
   },
   "dependencies": {
     "@bric/rex-core": "github:bric-digital/rex-core#main",
-    "@bric/webmunk-lists": "github:bric-digital/webmunk-lists#main",
+    "@bric/rex-lists": "github:bric-digital/rex-lists#main",
     "jquery": "^3.7.1"
   }
 }

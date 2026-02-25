@@ -1,6 +1,6 @@
-# webmunk-lists-front-end
+# rex-lists-front-end
 
-This repository provides a **Webmunk extension UI + service-worker helper** for **viewing and editing "lists"** that live in Webmunk's IndexedDB-backed list store (implemented in `@bric/webmunk-lists`).
+This repository provides a **REX extension UI + service-worker helper** for **viewing and editing "lists"** that live in REX's IndexedDB-backed list store (implemented in `@bric/rex-lists`).
 
 ## Configuration
 
@@ -25,7 +25,7 @@ This module reads from the `lists_front_end` section of the backend config.
 }
 ```
 
-> **Note**: The actual list data is configured in the `lists` section (see [webmunk-lists](https://github.com/bric-digital/webmunk-lists)). This module only controls whether the list management UI is available.
+> **Note**: The actual list data is configured in the `lists` section (see [rex-lists](https://github.com/bric-digital/rex-lists)). This module only controls whether the list management UI is available.
 
 ### Local Override (Lists Front End Only)
 
@@ -40,7 +40,7 @@ This module supports a local override in `chrome.storage.local` at key `webmunkL
 
 ### Interaction with History Module
 
-- `webmunk-history` reads list names from `REXConfiguration.history` (for example `allow_lists` and `filter_lists`).
+- `rex-history` reads list names from `REXConfiguration.history` (for example `allow_lists` and `filter_lists`).
 - When a user edits list entries in this UI, those entries are written to the shared lists database.
 - History matching uses that same shared list data, so entry changes made here are reflected in history collection behavior for configured lists.
 
@@ -72,7 +72,7 @@ In practice, these lists are most often used as **domain/pattern sets** for:
 
 ## URL and Domain Matching
 
-This section describes how URL/domain matching works in the Webmunk list system. Understanding these concepts is important for correctly configuring lists.
+This section describes how URL/domain matching works in the REX list system. Understanding these concepts is important for correctly configuring lists.
 
 ### URL Anatomy
 
@@ -179,7 +179,7 @@ With this configuration:
 
 ---
 
-## Data Model (from `@bric/webmunk-lists`)
+## Data Model (from `@bric/rex-lists`)
 
 - **Storage**: IndexedDB database `webmunk_lists`, store `list_entries`
 - **Entry fields**:
@@ -194,13 +194,13 @@ With this configuration:
 
 ---
 
-## Integration (typical Webmunk extension)
+## Integration (typical REX extension)
 
 ### Extension UI
 
 1. **Import and register** the module:
    - Example (from `webmunk-dev-extension/src/typescript/extension.ts`):
-     - `import listsFrontEndExtension from '@bric/webmunk-lists-front-end/extension'`
+     - `import listsFrontEndExtension from '@bric/rex-lists-front-end/extension'`
      - `registerREXModule(listsFrontEndExtension)`
 2. **Add an interface** with identifier **`list-editor`** (that's what the module activates on).
 3. Ensure your interface HTML includes a container with id **`list-container`** where the module injects UI.
@@ -208,7 +208,7 @@ With this configuration:
 ### Service Worker
 
 Import and call `setup()` once during service worker initialization:
-- `import listsFrontEndPlugin from '@bric/webmunk-lists-front-end/service-worker'`
+- `import listsFrontEndPlugin from '@bric/rex-lists-front-end/service-worker'`
 - `await listsFrontEndPlugin.setup({ configUrl, syncIntervalMinutes })`
 
 If you omit `configUrl`, the module won't auto-sync (but you can still use the UI to view/edit whatever is already in IndexedDB).
