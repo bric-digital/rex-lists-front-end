@@ -37,17 +37,100 @@ export class ListsFrontEndExtensionModule extends REXExtensionModule {
   }
 
   /**
+   * Return the HTML for the list editor interface
+   */
+  fetchHtmlInterface(identifier: string): string | null {
+    if (identifier !== 'list-editor') {
+      return null
+    }
+
+    return '<div class="col-12" id="list-editor-container">' +
+      '<div class="mb-3">' +
+        '<button class="btn btn-outline-secondary" id="back-to-main">' +
+          '<i class="bi bi-arrow-left me-2"></i>Back to Main' +
+        '</button>' +
+      '</div>' +
+      '<div class="list-editor">' +
+        '<div class="d-flex align-items-center justify-content-between mb-3">' +
+          '<h4 class="mb-0">Domain List Manager</h4>' +
+          '<div class="d-flex align-items-center">' +
+            '<span id="last-sync-time" class="text-muted me-2">Last sync: Never</span>' +
+            '<button id="sync-now-btn" class="btn btn-primary btn-sm">Sync Now</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="row mb-3">' +
+          '<div class="col-md-6">' +
+            '<label for="list-selector" class="form-label">Select List:</label>' +
+            '<select id="list-selector" class="form-select">' +
+              '<option value="">-- Select a list --</option>' +
+            '</select>' +
+          '</div>' +
+          '<div class="col-md-6 d-flex align-items-end justify-content-end gap-2">' +
+            '<button id="add-entry-btn" class="btn btn-success" disabled>Add Entry</button>' +
+            '<button id="export-list-btn" class="btn btn-secondary" disabled>Export</button>' +
+            '<button id="import-list-btn" class="btn btn-secondary" disabled>Import</button>' +
+          '</div>' +
+        '</div>' +
+        '<div id="list-table-container">' +
+          '<p class="text-muted">Select a list to view its entries</p>' +
+        '</div>' +
+      '</div>' +
+      '<div class="modal fade" id="entry-modal" tabindex="-1">' +
+        '<div class="modal-dialog">' +
+          '<div class="modal-content">' +
+            '<div class="modal-header">' +
+              '<h5 class="modal-title" id="entry-modal-title">Add Entry</h5>' +
+              '<button type="button" class="btn-close" data-bs-dismiss="modal"></button>' +
+            '</div>' +
+            '<div class="modal-body">' +
+              '<form id="entry-form">' +
+                '<input type="hidden" id="entry-id" />' +
+                '<div class="mb-3">' +
+                  '<label for="entry-domain" class="form-label">Domain/Pattern</label>' +
+                  '<input type="text" class="form-control" id="entry-domain" required />' +
+                  '<small class="form-text text-muted">e.g., google.com, *.example.com</small>' +
+                '</div>' +
+                '<div class="mb-3">' +
+                  '<label for="entry-pattern-type" class="form-label">Pattern Type</label>' +
+                  '<select class="form-select" id="entry-pattern-type" required>' +
+                    '<option value="domain">Registered Domain ONLY (must be eTLD+1 like google.com)</option>' +
+                    '<option value="host">Hostname (exact host; ignores leading www.)</option>' +
+                    '<option value="exact_url">Exact URL</option>' +
+                    '<option value="host_path_prefix">Host + Path Prefix (example.com/path...)</option>' +
+                    '<option value="regex">Regular Expression</option>' +
+                  '</select>' +
+                '</div>' +
+                '<div class="mb-3">' +
+                  '<label for="entry-category" class="form-label">Category (optional)</label>' +
+                  '<input type="text" class="form-control" id="entry-category" />' +
+                '</div>' +
+                '<div class="mb-3">' +
+                  '<label for="entry-description" class="form-label">Description (optional)</label>' +
+                  '<textarea class="form-control" id="entry-description" rows="2"></textarea>' +
+                '</div>' +
+              '</form>' +
+            '</div>' +
+            '<div class="modal-footer">' +
+              '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>' +
+              '<button type="button" class="btn btn-primary" id="save-entry-btn">Save</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<input type="file" id="import-file-input" accept=".json" style="display: none;" />' +
+    '</div>'
+  }
+
+  /**
    * Activate the list editor interface
    */
   activateInterface(uiDefinition: REXUIDefinition): boolean {
     console.log('[rex-lists-front-end] Activating interface:', uiDefinition)
 
-    // Only activate for list-editor identifier
     if (uiDefinition.identifier !== 'list-editor') {
       return false
     }
 
-    // Initialize asynchronously (fire and forget)
     this.initializeAsync().catch((error) => {
       console.error('[rex-lists-front-end] Failed to initialize:', error)
     })
@@ -59,19 +142,9 @@ export class ListsFrontEndExtensionModule extends REXExtensionModule {
    * Async initialization
    */
   private async initializeAsync(): Promise<void> {
-    // Wait for DOM to be ready
-    await this.waitForElement('#list-container')
-
-    // Initialize UI
-    await this.initializeUI()
-
-    // Load available lists
+    await this.waitForElement('#list-editor-container')
     await this.loadListSelector()
-
-    // Update sync status
     await this.updateSyncStatus()
-
-    // Set up event listeners
     this.setupEventListeners()
   }
 
@@ -97,103 +170,6 @@ export class ListsFrontEndExtensionModule extends REXExtensionModule {
         subtree: true
       })
     })
-  }
-
-  /**
-   * Initialize the UI components
-   */
-  private async initializeUI(): Promise<void> {
-    // This would typically load from an HTML template
-    // For now, we'll create the basic structure programmatically
-    const container = $('#list-container')
-
-    if (container.length === 0) {
-      console.warn('[rex-lists-front-end] #list-container not found')
-      return
-    }
-
-    // Clear existing content
-    container.empty()
-
-    // Create UI structure
-    container.html(`
-      <div class="list-editor">
-        <div class="header mb-3">
-          <h2>Domain List Manager</h2>
-          <div class="sync-status">
-            <span id="last-sync-time">Last sync: Never</span>
-            <button id="sync-now-btn" class="btn btn-primary btn-sm ms-2">Sync Now</button>
-          </div>
-        </div>
-
-        <div class="toolbar mb-3">
-          <div class="row">
-            <div class="col-md-6">
-              <label for="list-selector">Select List:</label>
-              <select id="list-selector" class="form-select">
-                <option value="">-- Select a list --</option>
-              </select>
-            </div>
-            <div class="col-md-6 text-end">
-              <button id="add-entry-btn" class="btn btn-success" disabled>Add Entry</button>
-              <button id="export-list-btn" class="btn btn-secondary" disabled>Export</button>
-              <button id="import-list-btn" class="btn btn-secondary" disabled>Import</button>
-            </div>
-          </div>
-        </div>
-
-        <div id="list-table-container">
-          <p class="text-muted">Select a list to view its entries</p>
-        </div>
-      </div>
-
-      <!-- Add/Edit Entry Modal -->
-      <div class="modal fade" id="entry-modal" tabindex="-1">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="entry-modal-title">Add Entry</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-              <form id="entry-form">
-                <input type="hidden" id="entry-id" />
-                <div class="mb-3">
-                  <label for="entry-domain" class="form-label">Domain/Pattern</label>
-                  <input type="text" class="form-control" id="entry-domain" required />
-                  <small class="form-text text-muted">e.g., google.com, *.example.com</small>
-                </div>
-                <div class="mb-3">
-                  <label for="entry-pattern-type" class="form-label">Pattern Type</label>
-                  <select class="form-select" id="entry-pattern-type" required>
-                    <option value="domain">Registered Domain ONLY (must be eTLD+1 like google.com)</option>
-                    <option value="host">Hostname (exact host; ignores leading www.)</option>
-                    <option value="exact_url">Exact URL</option>
-                    <option value="host_path_prefix">Host + Path Prefix (example.com/path...)</option>
-                    <option value="regex">Regular Expression</option>
-                  </select>
-                </div>
-                <div class="mb-3">
-                  <label for="entry-category" class="form-label">Category (optional)</label>
-                  <input type="text" class="form-control" id="entry-category" />
-                </div>
-                <div class="mb-3">
-                  <label for="entry-description" class="form-label">Description (optional)</label>
-                  <textarea class="form-control" id="entry-description" rows="2"></textarea>
-                </div>
-              </form>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-              <button type="button" class="btn btn-primary" id="save-entry-btn">Save</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Import File Input (hidden) -->
-      <input type="file" id="import-file-input" accept=".json" style="display: none;" />
-    `)
   }
 
   /**
