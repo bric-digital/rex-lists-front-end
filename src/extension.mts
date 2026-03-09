@@ -236,7 +236,7 @@ export class ListsFrontEndExtensionModule extends REXExtensionModule {
         <table class="table table-striped table-hover">
           <thead>
             <tr>
-              <th>Domain</th>
+              <th>Pattern</th>
               <th>Pattern Type</th>
               <th>Category</th>
               <th>Source</th>
@@ -258,7 +258,7 @@ export class ListsFrontEndExtensionModule extends REXExtensionModule {
 
         tableHtml += `
           <tr>
-            <td>${this.escapeHtml(entry.domain)}</td>
+            <td>${this.escapeHtml(entry.pattern)}</td>
             <td>${entry.pattern_type}</td>
             <td>${this.escapeHtml(entry.metadata.category || '-')}</td>
             <td>${sourceBadge}</td>
@@ -456,7 +456,7 @@ export class ListsFrontEndExtensionModule extends REXExtensionModule {
 
     $('#entry-modal-title').text('Edit Entry')
     $('#entry-id').val(entry.id?.toString() || '')
-    $('#entry-domain').val(entry.domain)
+    $('#entry-domain').val(entry.pattern)
     $('#entry-pattern-type').val(entry.pattern_type)
     $('#entry-category').val(entry.metadata.category || '')
     $('#entry-description').val(entry.metadata.description || '')
@@ -470,12 +470,12 @@ export class ListsFrontEndExtensionModule extends REXExtensionModule {
    */
   private async saveEntry(): Promise<void> {
     const entryId = $('#entry-id').val() as string
-    const domain = $('#entry-domain').val() as string
+    const pattern = $('#entry-domain').val() as string
     const patternType = $('#entry-pattern-type').val() as PatternType
     const category = $('#entry-category').val() as string
     const description = $('#entry-description').val() as string
 
-    if (!domain || !this.currentList) {
+    if (!pattern || !this.currentList) {
       return
     }
 
@@ -487,7 +487,7 @@ export class ListsFrontEndExtensionModule extends REXExtensionModule {
         if (description) metadata.description = description
 
         await updateListEntry(parseInt(entryId), {
-          domain,
+          pattern,
           pattern_type: patternType,
           metadata
         })
@@ -499,7 +499,7 @@ export class ListsFrontEndExtensionModule extends REXExtensionModule {
 
         await createListEntry({
           list_name: this.currentList,
-          domain,
+          pattern,
           pattern_type: patternType,
           source: 'user',
           metadata

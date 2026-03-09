@@ -199,7 +199,7 @@ With this configuration:
 ### Extension UI
 
 1. **Import and register** the module:
-   - Example (from `webmunk-dev-extension/src/typescript/extension.ts`):
+   - Example (from `rex-dev-extension/src/typescript/extension.ts`):
      - `import listsFrontEndExtension from '@bric/rex-lists-front-end/extension'`
      - `registerREXModule(listsFrontEndExtension)`
 2. **Add an interface** with identifier **`list-editor`** (that's what the module activates on).
