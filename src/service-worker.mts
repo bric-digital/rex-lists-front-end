@@ -4,8 +4,9 @@
  * Handles automatic configuration sync from backend
  */
 
-import { syncListsFromConfig, setDebug } from '@bric/webmunk-lists'
-import rexCorePlugin, { type REXConfiguration } from '@bric/rex-core/service-worker'
+import { syncListsFromConfig, setDebug } from '@bric/rex-lists'
+import rexCorePlugin from '@bric/rex-core/service-worker'
+import { type REXConfiguration } from '@bric/rex-core/extension'
 
 console.log('[rex-lists-front-end] Service worker module loaded')
 
