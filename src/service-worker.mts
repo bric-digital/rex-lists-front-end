@@ -6,7 +6,7 @@
 
 import { syncListsFromConfig, setDebug } from '@bric/rex-lists'
 import rexCorePlugin from '@bric/rex-core/service-worker'
-import { type REXConfiguration } from '@bric/rex-core/extension'
+import { type REXConfiguration } from '@bric/rex-core/common'
 
 console.log('[rex-lists-front-end] Service worker module loaded')
 

@@ -17,7 +17,8 @@ import {
   type PatternType,
   type EntrySource
 } from '@bric/rex-lists'
-import { REXExtensionModule, type REXUIDefinition } from '@bric/rex-core/extension'
+import { REXExtensionModule } from '@bric/rex-core/extension'
+import { type REXUIDefinition } from '@bric/rex-core/common'
 import { triggerManualSync, getLastSyncTime } from './service-worker.mjs'
 
 console.log('[rex-lists-front-end] Extension module loaded')
