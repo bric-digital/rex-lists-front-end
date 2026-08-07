@@ -29,6 +29,7 @@ console.log('[rex-lists-front-end] Extension module loaded')
 export class ListsFrontEndExtensionModule extends REXExtensionModule {
   private currentList: string | null = null
   private currentEntries: ListEntry[] = []
+  private allowBackendEntryDeletion = false
 
   /**
    * Setup the extension module
@@ -144,9 +145,31 @@ export class ListsFrontEndExtensionModule extends REXExtensionModule {
    */
   private async initializeAsync(): Promise<void> {
     await this.waitForElement('#list-editor-container')
+    await this.loadConfigurationFlags()
     await this.loadListSelector()
     await this.updateSyncStatus()
     this.setupEventListeners()
+  }
+
+  /**
+   * Read the module's configuration section for UI behavior flags.
+   *
+   * allow_delete_backend_entries: when true, entries provided by the study
+   * configuration (source 'backend') get a Delete button like user entries.
+   * Deletions persist until the study's lists configuration next changes —
+   * a config update re-syncs backend entries and restores them. Default false:
+   * study-configured entries are read-only for participants.
+   */
+  private async loadConfigurationFlags(): Promise<void> {
+    try {
+      const configuration = await chrome.runtime.sendMessage({ messageType: 'fetchConfiguration' }) as Record<string, unknown> | undefined
+      const section = configuration?.['lists_front_end'] as Record<string, unknown> | undefined
+
+      this.allowBackendEntryDeletion = section?.['allow_delete_backend_entries'] === true
+    } catch (error) {
+      console.warn('[rex-lists-front-end] Unable to read configuration flags:', error)
+      this.allowBackendEntryDeletion = false
+    }
   }
 
   /**
@@ -226,12 +249,19 @@ export class ListsFrontEndExtensionModule extends REXExtensionModule {
       this.currentEntries.forEach(entry => {
         const isBackend = entry.source === 'backend'
         const sourceBadge = this.getSourceBadge(entry.source)
-        const actionsHtml = isBackend
-          ? '<span class="text-muted">Read-only</span>'
-          : `
+
+        let actionsHtml = `
             <button class="btn btn-sm btn-primary edit-entry-btn" data-id="${entry.id}">Edit</button>
             <button class="btn btn-sm btn-danger delete-entry-btn" data-id="${entry.id}">Delete</button>
           `
+
+        if (isBackend) {
+          // Study-configured entries are read-only unless the configuration
+          // opts in to participant deletion (allow_delete_backend_entries).
+          actionsHtml = this.allowBackendEntryDeletion
+            ? `<button class="btn btn-sm btn-danger delete-entry-btn" data-id="${entry.id}">Delete</button>`
+            : '<span class="text-muted">Read-only</span>'
+        }
 
         tableHtml += `
           <tr>
