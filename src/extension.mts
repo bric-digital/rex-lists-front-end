@@ -518,12 +518,22 @@ export class ListsFrontEndExtensionModule extends REXExtensionModule {
       // Reload list
       await this.loadListEntries(this.currentList)
 
-      // Close modal
+      // Close modal. Blur first: hiding while a descendant (the Save button)
+      // holds focus makes Chrome reject Bootstrap's aria-hidden for
+      // accessibility ("Blocked aria-hidden on an element...").
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur()
+      }
+
       const modal = (window as any).bootstrap.Modal.getInstance(document.getElementById('entry-modal')!) // eslint-disable-line @typescript-eslint/no-explicit-any
       modal?.hide()
     } catch (error) {
       console.error('[rex-lists-front-end] Failed to save entry:', error)
-      alert('Failed to save entry. See console for details.')
+
+      // Validation errors carry the actionable message (wrong pattern type,
+      // invalid domain, ...); showing it beats sending people to the console.
+      const detail = error instanceof Error ? error.message : String(error)
+      alert(`Failed to save entry: ${detail}`)
     }
   }
 
