@@ -146,9 +146,11 @@ export class ListsFrontEndExtensionModule extends REXExtensionModule {
   private async initializeAsync(): Promise<void> {
     await this.waitForElement('#list-editor-container')
     await this.loadConfigurationFlags()
+    // Attach handlers before the selector options load: a list selection made
+    // in the gap between options appearing and handlers binding was lost.
+    this.setupEventListeners()
     await this.loadListSelector()
     await this.updateSyncStatus()
-    this.setupEventListeners()
   }
 
   /**
