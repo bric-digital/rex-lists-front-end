@@ -306,7 +306,7 @@ export class ListsFrontEndExtensionModule extends REXExtensionModule {
   private getSourceBadge(source: EntrySource): string {
     switch (source) {
       case 'backend':
-        return '<span class="badge bg-primary">Backend</span>'
+        return '<span class="badge bg-primary">Configuration</span>'
       case 'user':
         return '<span class="badge bg-success">User</span>'
       case 'generated':
