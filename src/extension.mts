@@ -19,9 +19,14 @@ import {
 } from '@bric/rex-lists'
 import { REXExtensionModule } from '@bric/rex-core/extension'
 import { type REXUIDefinition } from '@bric/rex-core/common'
-import { triggerManualSync, getLastSyncTime } from './service-worker.mjs'
 
 console.log('[rex-lists-front-end] Extension module loaded')
+
+interface ListsActionButtonConfig {
+  label: string
+  confirm_message?: string
+  message_type: string
+}
 
 /**
  * REXExtensionModule for list editor UI
@@ -30,6 +35,7 @@ export class ListsFrontEndExtensionModule extends REXExtensionModule {
   private currentList: string | null = null
   private currentEntries: ListEntry[] = []
   private allowBackendEntryDeletion = false
+  private actionButton: ListsActionButtonConfig | null = null
 
   /**
    * Setup the extension module
@@ -55,10 +61,7 @@ export class ListsFrontEndExtensionModule extends REXExtensionModule {
       '<div class="list-editor">' +
         '<div class="d-flex align-items-center justify-content-between mb-3">' +
           '<h4 class="mb-0">Domain List Manager</h4>' +
-          '<div class="d-flex align-items-center">' +
-            '<span id="last-sync-time" class="text-muted me-2">Last sync: Never</span>' +
-            '<button id="sync-now-btn" class="btn btn-primary btn-sm">Sync Now</button>' +
-          '</div>' +
+          '<div class="d-flex align-items-center" id="lists-action-slot"></div>' +
         '</div>' +
         '<div class="row mb-3">' +
           '<div class="col-md-6">' +
@@ -150,7 +153,7 @@ export class ListsFrontEndExtensionModule extends REXExtensionModule {
     // in the gap between options appearing and handlers binding was lost.
     this.setupEventListeners()
     await this.loadListSelector()
-    await this.updateSyncStatus()
+    this.renderActionButton()
   }
 
   /**
@@ -161,6 +164,12 @@ export class ListsFrontEndExtensionModule extends REXExtensionModule {
    * Deletions persist until the study's lists configuration next changes —
    * a config update re-syncs backend entries and restores them. Default false:
    * study-configured entries are read-only for participants.
+   *
+   * action_button: optional { label, confirm_message, message_type }. When
+   * present, the editor header shows a button that sends the configured
+   * runtime message — e.g. a study wires it to a history-rescan handler so
+   * list edits can be applied to already-collected data. Absent by default:
+   * no button renders.
    */
   private async loadConfigurationFlags(): Promise<void> {
     try {
@@ -168,10 +177,52 @@ export class ListsFrontEndExtensionModule extends REXExtensionModule {
       const section = configuration?.['lists_front_end'] as Record<string, unknown> | undefined
 
       this.allowBackendEntryDeletion = section?.['allow_delete_backend_entries'] === true
+
+      const actionButton = section?.['action_button'] as ListsActionButtonConfig | undefined
+
+      if (actionButton && typeof actionButton.label === 'string' && typeof actionButton.message_type === 'string') {
+        this.actionButton = actionButton
+      } else {
+        this.actionButton = null
+      }
     } catch (error) {
       console.warn('[rex-lists-front-end] Unable to read configuration flags:', error)
       this.allowBackendEntryDeletion = false
+      this.actionButton = null
     }
+  }
+
+  /**
+   * Render the configured action button into the editor header, if any.
+   */
+  private renderActionButton(): void {
+    const actionButton = this.actionButton
+
+    if (!actionButton) {
+      return
+    }
+
+    const button = $('<button id="lists-action-btn" class="btn btn-primary btn-sm"></button>')
+      .text(actionButton.label)
+
+    $('#lists-action-slot').empty().append(button)
+
+    button.on('click', async () => {
+      if (actionButton.confirm_message && !confirm(actionButton.confirm_message)) {
+        return
+      }
+
+      button.prop('disabled', true)
+
+      try {
+        await chrome.runtime.sendMessage({ messageType: actionButton.message_type })
+      } catch (error) {
+        console.error('[rex-lists-front-end] Action button message failed:', error)
+        alert('Action failed. See console for details.')
+      } finally {
+        button.prop('disabled', false)
+      }
+    })
   }
 
   /**
@@ -326,24 +377,6 @@ export class ListsFrontEndExtensionModule extends REXExtensionModule {
   }
 
   /**
-   * Update sync status display
-   */
-  private async updateSyncStatus(): Promise<void> {
-    try {
-      const lastSync = await getLastSyncTime()
-
-      if (lastSync) {
-        const date = new Date(lastSync)
-        $('#last-sync-time').text(`Last sync: ${date.toLocaleString()}`)
-      } else {
-        $('#last-sync-time').text('Last sync: Never')
-      }
-    } catch (error) {
-      console.error('[rex-lists-front-end] Failed to get sync status:', error)
-    }
-  }
-
-  /**
    * Setup event listeners
    */
   private setupEventListeners(): void {
@@ -387,24 +420,6 @@ export class ListsFrontEndExtensionModule extends REXExtensionModule {
         $('#list-table-container').html('<p class="text-muted">Select a list to view its entries</p>')
         $('#add-entry-btn, #export-list-btn, #import-list-btn').prop('disabled', true)
       }
-    })
-
-    // Sync now button
-    $('#sync-now-btn').on('click', async () => {
-      $('#sync-now-btn').prop('disabled', true).text('Syncing...')
-
-      const success = await triggerManualSync()
-
-      if (success) {
-        await this.updateSyncStatus()
-        await this.loadListSelector()
-
-        if (this.currentList) {
-          await this.loadListEntries(this.currentList)
-        }
-      }
-
-      $('#sync-now-btn').prop('disabled', false).text('Sync Now')
     })
 
     // Add entry button
