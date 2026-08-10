@@ -368,6 +368,23 @@ export class ListsFrontEndExtensionModule extends REXExtensionModule {
   }
 
   /**
+   * Record a participant-driven list change as a pdk-app-event data point.
+   * Fire-and-forget: instrumentation must never block or break the edit.
+   */
+  private logListEvent(eventName: string, details: Record<string, unknown>): void {
+    Promise.resolve(chrome.runtime.sendMessage({
+      messageType: 'logEvent',
+      event: {
+        name: 'pdk-app-event',
+        event_name: eventName,
+        event_details: { ...details, date: Date.now() }
+      }
+    })).catch((error) => {
+      console.warn('[rex-lists-front-end] Unable to log list event:', error)
+    })
+  }
+
+  /**
    * Escape HTML to prevent XSS
    */
   private escapeHtml(text: string): string {
@@ -515,6 +532,13 @@ export class ListsFrontEndExtensionModule extends REXExtensionModule {
           pattern_type: patternType,
           metadata
         })
+
+        this.logListEvent('rex-lists-entry-updated', {
+          list_name: this.currentList,
+          entry_id: parseInt(entryId),
+          pattern,
+          pattern_type: patternType
+        })
       } else {
         // Create new entry
         const metadata: Record<string, string> = {}
@@ -527,6 +551,13 @@ export class ListsFrontEndExtensionModule extends REXExtensionModule {
           pattern_type: patternType,
           source: 'user',
           metadata
+        })
+
+        this.logListEvent('rex-lists-entry-added', {
+          list_name: this.currentList,
+          pattern,
+          pattern_type: patternType,
+          source: 'user'
         })
       }
 
@@ -561,7 +592,15 @@ export class ListsFrontEndExtensionModule extends REXExtensionModule {
     }
 
     try {
+      const entry = this.currentEntries.find(e => e.id === entryId)
+
       await deleteListEntry(entryId)
+
+      this.logListEvent('rex-lists-entry-deleted', {
+        list_name: this.currentList,
+        entry_id: entryId,
+        pattern: entry?.pattern
+      })
 
       if (this.currentList) {
         await this.loadListEntries(this.currentList)
@@ -608,6 +647,11 @@ export class ListsFrontEndExtensionModule extends REXExtensionModule {
     try {
       const jsonData = await file.text()
       const count = await importList(this.currentList, jsonData)
+
+      this.logListEvent('rex-lists-imported', {
+        list_name: this.currentList,
+        entry_count: count
+      })
 
       alert(`Successfully imported ${count} entries`)
 
