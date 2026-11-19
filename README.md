@@ -11,47 +11,33 @@ This module reads from the `lists_front_end` section of the backend config.
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
 | `enabled` | boolean | Yes | - | Enable/disable the list management UI |
-| `config_url` | string | No | derived from core config | URL to fetch list configuration JSON from |
-| `sync_interval_minutes` | number | No | 60 | Periodic sync interval for list refresh |
 
 ### Example
 
 ```json
 {
   "lists_front_end": {
-    "enabled": true,
-    "sync_interval_minutes": 60
+    "enabled": true
   }
 }
 ```
 
 > **Note**: The actual list data is configured in the `lists` section (see [rex-lists](https://github.com/bric-digital/rex-lists)). This module only controls whether the list management UI is available.
 
-### Local Override (Lists Front End Only)
+### Interaction with other modules
 
-This module supports a local override in `chrome.storage.local` at key `webmunkListsFrontEndConfiguration`.
-
-- If the stored object has a `lists_front_end` object, that object is used.
-- If the stored object is already a flat `lists_front_end` config shape, it is also accepted.
-- Override values are merged over rex-core configuration and can override fields like:
-  - `config_url`
-  - `sync_interval_minutes`
-- This override is scoped to the lists front end module; it does not replace module config loading rules in other modules.
-
-### Interaction with History Module
-
-- `rex-history` reads list names from `REXConfiguration.history` (for example `allow_lists` and `filter_lists`).
+- The modules that use lists name them in their own configuration sections: the URL redaction processor (`rex-content-processing-redaction-url`) names its allow, filter and domain-only lists, and `rex-history` names its category lists.
 - When a user edits list entries in this UI, those entries are written to the shared lists database.
-- History matching uses that same shared list data, so entry changes made here are reflected in history collection behavior for configured lists.
+- Those modules read the same shared list data, so entry changes made here apply to records processed afterwards.
 
 ---
 
 In practice, these lists are most often used as **domain/pattern sets** for:
-- Filter / block lists - exclude certain URLs/domains from data collection - can work on their own or with allow lists.
-- Allow lists - ONLY URLs or domains on these lists are included in data collection.
+- Filter / block lists - a visit to a URL or domain on these lists is still recorded, with its time and a category label in place of the address. They can work on their own or with allow lists.
+- Allow lists - only URLs or domains on these lists keep their address in the record; every other visit is still recorded, with its time and a label in place of the address.
 - Categorization lists attach categories/metadata to patterns
 
-> Note: This module's responsibility is "list management UI + sync". It does **not** enforce blocking/allowing by itself. How lists are used is determiend by the configuration of the extension or module consuming the list.
+> Note: This module's responsibility is the list management UI. Lists are loaded from configuration by `@bric/rex-lists/service-worker`. It does **not** enforce blocking/allowing by itself. How lists are used is determiend by the configuration of the extension or module consuming the list.
 
 ## What this module provides
 
@@ -61,11 +47,7 @@ In practice, these lists are most often used as **domain/pattern sets** for:
   - allows adding/editing/deleting **user** entries
   - marks **backend** entries read-only
   - supports **export** to JSON and **import** from JSON
-  - shows "last sync" time and a **Sync Now** button
-- **Service worker helper (`/service-worker`)**:
-  - optional periodic sync via `chrome.alarms` (`webmunk-list-sync`)
-  - manual sync trigger callable from the UI
-  - stores last sync timestamp in `chrome.storage.local` (`webmunk_last_list_sync`)
+- **Service worker entrypoint (`/service-worker`)**: the rex-lists service-worker module, which loads the `lists` section of configuration. This module does no loading of its own.
 - **Browser entrypoint (`/browser`)**: currently no-op (list management is done in extension + service worker contexts)
 
 ---
@@ -207,17 +189,16 @@ With this configuration:
 
 ### Service Worker
 
-Import and call `setup()` once during service worker initialization:
-- `import listsFrontEndPlugin from '@bric/rex-lists-front-end/service-worker'`
-- `await listsFrontEndPlugin.setup({ configUrl, syncIntervalMinutes })`
+Import the service-worker entrypoint in the service worker entry file, or import `@bric/rex-lists/service-worker` directly:
+- `import '@bric/rex-lists-front-end/service-worker'`
 
-If you omit `configUrl`, the module won't auto-sync (but you can still use the UI to view/edit whatever is already in IndexedDB).
+rex-core then calls the rex-lists module whenever configuration changes, and it loads the `lists` section.
 
 ---
 
 ## Backend Configuration Format (Lists)
 
-The list sync expects the fetched configuration JSON to have a `lists` object like:
+rex-lists expects the configuration to have a `lists` object like:
 
 ```json
 {
