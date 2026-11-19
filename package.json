@@ -41,7 +41,7 @@
   },
   "dependencies": {
     "@bric/rex-core": "github:bric-digital/rex-core#main",
-    "@bric/rex-lists": "github:bric-digital/rex-lists#split-and-load",
+    "@bric/rex-lists": "github:bric-digital/rex-lists#main",
     "jquery": "^4.0.0"
   }
 }
